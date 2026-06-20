@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>KAMANDAR LEAGUE</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#e8000d;--red2:#8b0007;--red3:#ff1a26;
+  --blk:#040404;--blk2:#0c0c0c;--blk3:#141414;--blk4:#1c1c1c;
+  --wh:#f0f0f0;--wh2:#999;
+  --gold:#ffd700;--gold2:#c8a400;
+  --purple:#a855f7;--blue:#00aaff;
+  --green:#00ff88;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--blk);color:var(--wh);font-family:'Orbitron',Tahoma,sans-serif;overflow:hidden;position:fixed;width:100%;height:100%;}
+
+/* CANVAS BG */
+#bgc{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;}
+.bg-layer{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none;
+  background:radial-gradient(ellipse 90% 50% at 50% -10%,rgba(232,0,13,0.22) 0%,transparent 70%),
+  radial-gradient(ellipse 50% 30% at 10% 110%,rgba(139,0,7,0.14) 0%,transparent 60%),
+  radial-gradient(ellipse 50% 30% at 90% 110%,rgba(139,0,7,0.1) 0%,transparent 60%);}
+.grid-bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none;
+  background-image:linear-gradient(rgba(232,0,13,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(232,0,13,0.05) 1px,transparent 1px);
+  background-size:50px 50px;}
+
+/* SCAN LINE */
+.scanline{position:fixed;top:0;left:0;width:100%;height:3px;background:linear-gradient(90deg,transparent,rgba(232,0,13,0.6),transparent);z-index:2;pointer-events:none;animation:scan 4s linear infinite;}
+@keyframes scan{0%{top:-3px;}100%{top:100vh;}}
+
+/* GLITCH overlay */
+.glitch-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;opacity:0;animation:glitch-flicker 8s infinite;}
+@keyframes glitch-flicker{0%,94%,96%,100%{opacity:0;}95%{opacity:1;background:rgba(232,0,13,0.03);}}
+
+#app{position:relative;z-index:3;height:100%;display:flex;flex-direction:column;}
+
+/* HEADER */
+.hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 16px;
+  background:linear-gradient(180deg,rgba(0,0,0,0.98),rgba(0,0,0,0.85));
+  border-bottom:1px solid var(--red2);
+  flex-shrink:0;
+  position:relative;overflow:hidden;
+}
+.hdr::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--red3),transparent);animation:hdr-glow 3s ease-in-out infinite;}
+@keyframes hdr-glow{0%,100%{opacity:0.5;}50%{opacity:1;}}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-hex{width:38px;height:38px;background:linear-gradient(135deg,var(--red),var(--red2));clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:flex;align-items:center;justify-content:center;font-size:16px;animation:hex-pulse 2s ease-in-out infinite;flex-shrink:0;}
+@keyframes hex-pulse{0%,100%{box-shadow:0 0 15px rgba(232,0,13,0.5);}50%{box-shadow:0 0 30px rgba(232,0,13,0.9),0 0 50px rgba(232,0,13,0.4);}}
+.logo-text{font-size:18px;font-weight:900;letter-spacing:3px;background:linear-gradient(135deg,#fff,var(--red3),#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.logo-sub{font-size:7px;letter-spacing:4px;color:var(--red);display:block;margin-top:-2px;}
+.hdr-right{display:flex;align-items:center;gap:8px;}
+.admin-btn{background:none;border:1px solid rgba(232,0,13,0.3);color:var(--wh2);width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:all 0.3s;clip-path:polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%);}
+.admin-btn:hover{background:rgba(232,0,13,0.2);border-color:var(--red);color:#fff;}
+.live-badge{background:var(--red);color:#fff;font-size:7px;letter-spacing:2px;padding:3px 8px;animation:blink-badge 1.5s ease-in-out infinite;clip-path:polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%);}
+@keyframes blink-badge{0%,100%{opacity:1;}50%{opacity:0.5;}}
+
+/* SCROLL AREA */
+.content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:70px;}
+.content::-webkit-scrollbar{display:none;}
+
+/* BOTTOM NAV */
+.bnav{
+  position:fixed;bottom:0;left:0;right:0;
+  display:flex;
+  background:rgba(4,4,4,0.97);
+  border-top:1px solid var(--red2);
+  z-index:50;
+  backdrop-filter:blur(12px);
+}
+.bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;cursor:pointer;transition:all 0.3s;border:none;background:none;color:var(--wh2);font-family:'Orbitron',sans-serif;position:relative;gap:3px;}
+.bnav-btn .icon{font-size:18px;transition:transform 0.3s;}
+.bnav-btn .label{font-size:7px;letter-spacing:1px;}
+.bnav-btn.active{color:var(--red3);}
+.bnav-btn.active .icon{transform:scale(1.2);}
+.bnav-btn.active::after{content:'';position:absolute;top:0;left:10%;right:10%;height:2px;background:linear-gradient(90deg,transparent,var(--red3),transparent);}
+
+/* PAGES */
+.page{display:none;animation:pgIn 0.35s ease;}
+.page.active{display:block;}
+@keyframes pgIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+/* SECTION */
+.sec{padding:16px;}
+.sec-hdr{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.sec-title{font-size:12px;font-weight:700;letter-spacing:2px;white-space:nowrap;}
+.sec-line{flex:1;height:1px;background:linear-gradient(90deg,var(--red2),transparent);}
+
+/* HOME HERO */
+.hero{padding:20px 16px 14px;text-align:center;position:relative;}
+.hero::before{content:'KAMANDAR';position:absolute;top:10px;left:50%;transform:translateX(-50%);font-size:60px;font-weight:900;color:rgba(232,0,13,0.04);letter-spacing:8px;white-space:nowrap;pointer-events:none;}
+.season-badge{display:inline-block;background:linear-gradient(90deg,transparent,rgba(232,0,13,0.3),transparent);border:1px solid var(--red2);font-size:8px;letter-spacing:5px;padding:4px 18px;color:var(--red);margin-bottom:14px;}
+.hero-title{font-size:clamp(28px,8vw,52px);font-weight:900;letter-spacing:6px;line-height:1.1;margin-bottom:10px;}
+.hero-title span{display:block;background:linear-gradient(135deg,var(--red3),var(--red2),var(--red3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 15px rgba(232,0,13,0.5));animation:title-flicker 5s ease-in-out infinite;}
+@keyframes title-flicker{0%,90%,100%{filter:drop-shadow(0 0 15px rgba(232,0,13,0.5));}92%,98%{filter:drop-shadow(0 0 30px rgba(232,0,13,0.9));}}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0;}
+.stat-card{background:linear-gradient(135deg,rgba(232,0,13,0.08),rgba(0,0,0,0.4));border:1px solid rgba(232,0,13,0.25);padding:10px 6px;text-align:center;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent,rgba(232,0,13,0.05));animation:card-shine 4s ease-in-out infinite;}
+@keyframes card-shine{0%,100%{opacity:0;}50%{opacity:1;}}
+.stat-num{font-size:22px;font-weight:900;color:var(--red3);display:block;text-shadow:0 0 15px rgba(232,0,13,0.5);}
+.stat-lbl{font-size:7px;letter-spacing:2px;color:var(--wh2);}
+
+/* CARDS */
+.card{background:linear-gradient(135deg,rgba(20,20,20,0.95),rgba(12,12,12,0.98));border:1px solid rgba(232,0,13,0.18);padding:14px;position:relative;clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px));overflow:hidden;transition:all 0.3s;margin-bottom:10px;}
+.card::before{content:'';position:absolute;top:0;right:0;width:0;height:0;border-top:12px solid rgba(232,0,13,0.3);border-left:12px solid transparent;}
+.card:active{transform:scale(0.98);}
+.card.guild-card{border-color:rgba(168,85,247,0.2);}
+.card.guild-card::before{border-top-color:rgba(168,85,247,0.3);}
+.card.player-card{border-color:rgba(0,170,255,0.18);}
+.card.player-card::before{border-top-color:rgba(0,170,255,0.3);}
+.card-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+/* BADGE */
+.badge{font-size:8px;letter-spacing:1px;padding:2px 7px;display:inline-block;}
+.b-red{background:rgba(232,0,13,0.18);border:1px solid rgba(232,0,13,0.4);color:var(--red3);}
+.b-gold{background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.3);color:var(--gold);}
+.b-gray{background:rgba(100,100,100,0.18);border:1px solid rgba(100,100,100,0.3);color:#666;}
+.b-purple{background:rgba(168,85,247,0.12);border:1px solid rgba(168,85,247,0.35);color:#c084fc;}
+.b-blue{background:rgba(0,170,255,0.1);border:1px solid rgba(0,170,255,0.3);color:var(--blue);}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 20px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px;font-weight:700;border:none;cursor:pointer;transition:all 0.3s;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);text-transform:uppercase;width:100%;}
+.btn-red{background:linear-gradient(135deg,var(--red),var(--red2));color:#fff;box-shadow:0 0 15px rgba(232,0,13,0.3);}
+.btn-red:active{box-shadow:0 0 25px rgba(232,0,13,0.7);transform:scale(0.97);}
+.btn-outline{background:transparent;border:1px solid var(--red2);color:var(--wh);clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);}
+.btn-outline:active{background:rgba(232,0,13,0.1);}
+.btn-purple{background:linear-gradient(135deg,var(--purple),#6d28d9);color:#fff;}
+.btn-blue{background:linear-gradient(135deg,var(--blue),#0060b0);color:#fff;}
+.btn-sm{padding:7px 14px;font-size:8px;}
+.btn-danger{background:transparent;border:1px solid rgba(200,0,0,0.4);color:#c00;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);}
+
+/* FAB */
+.fab{position:fixed;bottom:76px;left:16px;width:52px;height:52px;background:linear-gradient(135deg,var(--red),var(--red2));border:none;color:#fff;font-size:24px;cursor:pointer;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:flex;align-items:center;justify-content:center;z-index:49;box-shadow:0 0 20px rgba(232,0,13,0.5);animation:fab-pulse 2s ease-in-out infinite;transition:all 0.3s;}
+.fab:active{transform:scale(0.9);}
+@keyframes fab-pulse{0%,100%{box-shadow:0 0 20px rgba(232,0,13,0.5);}50%{box-shadow:0 0 35px rgba(232,0,13,0.8),0 0 50px rgba(232,0,13,0.3);}}
+
+/* MODAL */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:200;align-items:flex-end;justify-content:center;backdrop-filter:blur(6px);}
+.modal-ov.open{display:flex;animation:ov-in 0.25s ease;}
+@keyframes ov-in{from{opacity:0;}to{opacity:1;}}
+.modal{background:var(--blk2);border:1px solid rgba(232,0,13,0.35);width:100%;max-height:90vh;overflow-y:auto;position:relative;clip-path:polygon(0 16px,16px 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%);padding:20px 16px 24px;animation:modal-up 0.3s ease;box-shadow:0 -10px 50px rgba(232,0,13,0.2);}
+@keyframes modal-up{from{transform:translateY(40px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.modal.guild-modal{border-color:rgba(168,85,247,0.4);box-shadow:0 -10px 50px rgba(168,85,247,0.15);}
+.modal.player-modal{border-color:rgba(0,170,255,0.35);box-shadow:0 -10px 50px rgba(0,170,255,0.1);}
+.modal.admin-modal{border-color:rgba(255,215,0,0.3);box-shadow:0 -10px 50px rgba(255,215,0,0.1);}
+.modal-title{font-size:13px;font-weight:700;letter-spacing:2px;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid rgba(232,0,13,0.2);}
+.modal-close{position:absolute;top:12px;left:12px;background:none;border:1px solid rgba(255,255,255,0.15);color:var(--wh2);width:28px;height:28px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;}
+
+/* FORMS */
+.fg{margin-bottom:14px;}
+.fl{display:block;font-size:8px;letter-spacing:2px;color:var(--wh2);margin-bottom:6px;}
+.fi{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(232,0,13,0.2);color:var(--wh);padding:10px 12px;font-family:'Orbitron',sans-serif;font-size:11px;outline:none;transition:border-color 0.3s;}
+.fi:focus{border-color:var(--red);}
+.fi.fp{border-color:rgba(168,85,247,0.25);}
+.fi.fp:focus{border-color:var(--purple);}
+.fi.fb{border-color:rgba(0,170,255,0.2);}
+.fi.fb:focus{border-color:var(--blue);}
+textarea.fi{resize:none;}
+.player-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.fi-small{font-size:10px;padding:8px 10px;}
+.rg{display:flex;gap:6px;flex-wrap:wrap;}
+.rb{flex:1;min-width:80px;background:rgba(255,255,255,0.04);border:1px solid rgba(232,0,13,0.18);color:var(--wh2);padding:8px 6px;font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1px;cursor:pointer;transition:all 0.3s;text-align:center;clip-path:polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%);}
+.rb.sel{background:rgba(232,0,13,0.18);border-color:var(--red);color:#fff;box-shadow:0 0 10px rgba(232,0,13,0.3);}
+.ma{display:flex;gap:8px;margin-top:16px;}
+.field-hint{font-size:7px;color:var(--wh2);margin-top:4px;letter-spacing:1px;}
+.field-error{font-size:7px;color:var(--red3);margin-top:4px;letter-spacing:1px;display:none;}
+
+/* ID + NAME field pair */
+.id-name-pair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+
+/* BRACKET TREE */
+.bracket-wrap{overflow-x:auto;padding:16px;-webkit-overflow-scrolling:touch;}
+.bracket-wrap::-webkit-scrollbar{display:none;}
+.bracket-tree{display:flex;gap:0;min-width:fit-content;align-items:center;}
+.b-round{display:flex;flex-direction:column;justify-content:space-around;min-width:140px;padding:0 8px;}
+.b-round-title{font-size:8px;letter-spacing:2px;color:var(--red);text-align:center;padding:6px;border-bottom:1px solid rgba(232,0,13,0.2);margin-bottom:8px;}
+.b-matches{display:flex;flex-direction:column;gap:16px;justify-content:space-around;flex:1;}
+.b-match{position:relative;}
+.b-team{padding:8px 10px;font-size:9px;background:rgba(20,20,20,0.9);border:1px solid rgba(232,0,13,0.15);cursor:pointer;transition:all 0.2s;display:flex;justify-content:space-between;align-items:center;}
+.b-team:first-child{border-bottom:none;}
+.b-team:hover{background:rgba(232,0,13,0.07);}
+.b-team.winner{color:var(--red3);font-weight:700;border-color:rgba(232,0,13,0.5);background:rgba(232,0,13,0.08);}
+.b-team.winner::after{content:'✓';color:var(--red3);font-size:8px;}
+.b-team.empty{color:rgba(255,255,255,0.2);font-style:italic;}
+.b-connector{display:flex;align-items:center;}
+.b-line-v{width:16px;border-top:1px solid rgba(232,0,13,0.3);}
+.b-line-h{width:1px;background:rgba(232,0,13,0.3);}
+
+/* H2H */
+.h2h-card{background:linear-gradient(135deg,rgba(20,20,20,0.95),rgba(12,12,12,0.98));border:1px solid rgba(232,0,13,0.18);padding:12px 14px;margin-bottom:8px;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.h2h-team{flex:1;text-align:center;min-width:80px;}
+.h2h-name{font-size:11px;font-weight:700;color:#fff;margin-bottom:2px;}
+.h2h-sub{font-size:7px;color:var(--wh2);}
+.h2h-vs{font-size:16px;font-weight:900;color:var(--red3);text-shadow:0 0 12px rgba(232,0,13,0.5);min-width:32px;text-align:center;}
+.h2h-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
+.h2h-btn{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:var(--wh2);padding:5px 10px;font-family:'Orbitron',sans-serif;font-size:7px;cursor:pointer;transition:all 0.3s;clip-path:polygon(3px 0%,100% 0%,calc(100% - 3px) 100%,0% 100%);}
+.h2h-btn:active{background:rgba(232,0,13,0.2);border-color:var(--red);color:#fff;}
+
+/* PRIZES */
+.prize-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.prize-card{border:1px solid rgba(232,0,13,0.2);padding:16px 10px;text-align:center;clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px));background:rgba(12,12,12,0.95);transition:all 0.3s;}
+.prize-card:active{transform:scale(0.97);}
+.prize-card.p1{border-color:var(--gold2);}
+.prize-card.p2{border-color:rgba(192,192,192,0.4);}
+.prize-card.p3{border-color:rgba(205,127,50,0.4);}
+.prize-num{font-size:36px;font-weight:900;line-height:1;}
+.prize-card.p1 .prize-num{color:var(--gold);text-shadow:0 0 15px rgba(255,215,0,0.4);}
+.prize-card.p2 .prize-num{color:#c0c0c0;}
+.prize-card.p3 .prize-num{color:#cd7f32;}
+.prize-title{font-size:8px;letter-spacing:2px;color:var(--wh2);margin:6px 0 10px;}
+.prize-val{font-size:10px;font-weight:700;color:#fff;word-break:break-word;}
+.prize-sub{font-size:8px;color:var(--wh2);margin-top:4px;}
+
+/* LEADERBOARD */
+.lb-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(12,12,12,0.8);border:1px solid rgba(232,0,13,0.08);margin-bottom:6px;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px));transition:all 0.3s;}
+.lb-row:active{background:rgba(232,0,13,0.05);}
+.lb-rank{font-size:18px;font-weight:900;min-width:28px;text-align:center;}
+.lb-info{flex:1;}
+.lb-name{font-size:12px;font-weight:700;color:#fff;}
+.lb-sub{font-size:8px;color:var(--wh2);letter-spacing:1px;}
+.lb-val{font-size:16px;font-weight:900;}
+
+/* ADMIN */
+.admin-section{margin-bottom:20px;}
+.admin-section-title{font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(255,215,0,0.2);}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);margin-bottom:6px;}
+.toggle-label{font-size:10px;color:var(--wh);}
+.toggle{width:44px;height:24px;background:rgba(232,0,13,0.2);border:1px solid rgba(232,0,13,0.3);border-radius:12px;cursor:pointer;position:relative;transition:all 0.3s;flex-shrink:0;}
+.toggle.on{background:var(--red);border-color:var(--red3);}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;background:#fff;border-radius:50%;transition:all 0.3s;}
+.toggle.on::after{transform:translateX(20px);}
+
+/* PARTICLES EXTRA */
+.particle{position:fixed;pointer-events:none;z-index:1;border-radius:50%;animation:float-up linear infinite;}
+@keyframes float-up{0%{transform:translateY(0) rotate(0deg);opacity:1;}100%{transform:translateY(-100vh) rotate(720deg);opacity:0;}}
+
+/* EMPTY */
+.empty{text-align:center;padding:40px 20px;}
+.empty-icon{font-size:40px;opacity:0.25;margin-bottom:12px;}
+.empty-text{font-size:9px;letter-spacing:2px;color:var(--wh2);margin-bottom:16px;}
+
+/* TOAST */
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-80px);background:linear-gradient(135deg,var(--red),var(--red2));color:#fff;padding:10px 22px;font-size:9px;letter-spacing:2px;z-index:300;transition:transform 0.4s ease;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);box-shadow:0 4px 30px rgba(232,0,13,0.5);white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.success{background:linear-gradient(135deg,#00aa44,#006622);}
+.toast.warn{background:linear-gradient(135deg,#cc7700,#885500);}
+
+/* GUILD VIEW */
+.guild-header{display:flex;gap:14px;align-items:flex-start;margin-bottom:16px;}
+.guild-avatar{width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
+.guild-meta-name{font-size:16px;font-weight:900;color:#fff;letter-spacing:2px;margin-bottom:3px;}
+.guild-meta-tag{font-size:9px;letter-spacing:3px;margin-bottom:6px;}
+.guild-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.guild-stat{background:rgba(255,255,255,0.04);padding:10px;text-align:center;}
+.guild-stat-num{font-size:20px;font-weight:900;display:block;}
+.guild-stat-lbl{font-size:7px;color:var(--wh2);letter-spacing:1px;}
+
+/* MEMBER ROW */
+.member-row{display:flex;align-items:center;gap:10px;padding:9px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);margin-bottom:5px;}
+
+/* LOCK SCREEN */
+.lock-screen{position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:400;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;backdrop-filter:blur(10px);}
+.lock-icon{font-size:48px;animation:lock-pulse 2s ease-in-out infinite;}
+@keyframes lock-pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
+.lock-title{font-size:14px;letter-spacing:3px;color:var(--gold);}
+.lock-sub{font-size:8px;letter-spacing:2px;color:var(--wh2);}
+.lock-input{width:220px;background:rgba(255,215,0,0.05);border:1px solid rgba(255,215,0,0.3);color:var(--gold);padding:12px;font-family:'Orbitron',sans-serif;font-size:16px;text-align:center;letter-spacing:4px;outline:none;}
+.lock-input:focus{border-color:var(--gold);}
+.lock-btn{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;border:none;padding:11px 30px;font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;cursor:pointer;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);}
+.lock-err{font-size:9px;color:var(--red3);letter-spacing:2px;min-height:14px;}
+
+/* DIVIDER */
+.div{height:1px;background:linear-gradient(90deg,transparent,rgba(232,0,13,0.25),transparent);margin:14px 0;}
+
+/* MEMBER SLOT */
+.member-slot{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);padding:8px 10px;display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.m-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+
+/* KILL BADGE */
+.kill-num{font-size:14px;font-weight:900;color:var(--red3);}
+
+/* TYPE colors */
+.type-head{color:var(--red3);}
+.type-west{color:#60a5fa;}
+.type-cheat{color:var(--green);}
+
+/* Number input */
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
+
+/* select */
+select.fi{background:rgba(10,10,10,0.9);cursor:pointer;}
+</style>
+</head>
+<body>
+<canvas id="bgc"></canvas>
+<div class="bg-layer"></div>
+<div class="grid-bg"></div>
+<div class="scanline"></div>
+<div class="glitch-overlay"></div>
+
+<div id="app">
+  <div class="hdr">
+    <div class="logo">
+      <div class="logo-hex">🏹</div>
+      <div>
+        <div class="logo-text">KAMANDAR</div>
+        <div class="logo-sub">FREE FIRE LEAGUE</div>
+      </div>
+    </div>
+    <div class="hdr-right">
+      <div class="live-badge">LIVE</div>
+      <button class="admin-btn" onclick="openAdminLock()" title="ادمین">⚙</button>
+    </div>
+  </div>
+
+  <div class="content" id="content">
+
+    <!-- HOME -->
+    <div id="pg-home" class="page active">
+      <div class="hero">
+        <div class="season-badge">SEASON 01 · ACTIVE</div>
+        <div class="hero-title">
+          لیگ<br><span>KAMANDAR</span>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="stats-row">
+          <div class="stat-card"><span class="stat-num" id="st-sq">0</span><div class="stat-lbl">اسکواد</div></div>
+          <div class="stat-card"><span class="stat-num" id="st-gl">0</span><div class="stat-lbl">گیلد</div></div>
+          <div class="stat-card"><span class="stat-num" id="st-pl">0</span><div class="stat-lbl">بازیکن</div></div>
+          <div class="stat-card"><span class="stat-num" id="st-mt">0</span><div class="stat-lbl">مچ</div></div>
+        </div>
+        <div class="div"></div>
+        <div class="sec-hdr"><div class="sec-title">🏆 برترین اسکوادها</div><div class="sec-line"></div></div>
+        <div id="home-sq-lb"></div>
+        <div class="div"></div>
+        <div class="sec-hdr"><div class="sec-title" style="color:var(--purple)">🏰 برترین گیلدها</div><div class="sec-line" style="background:linear-gradient(90deg,var(--purple),transparent)"></div></div>
+        <div id="home-gl-lb"></div>
+        <div class="div"></div>
+        <div class="sec-hdr"><div class="sec-title" style="color:var(--blue)">💀 برترین کیلرها</div><div class="sec-line" style="background:linear-gradient(90deg,var(--blue),transparent)"></div></div>
+        <div id="home-kl-lb"></div>
+      </div>
+    </div>
+
+    <!-- SQUADS -->
+    <div id="pg-squads" class="page">
+      <div class="sec">
+        <div class="sec-hdr"><div class="sec-title">⚔️ اسکوادها</div><div class="sec-line"></div></div>
+        <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
+          <button class="badge b-red" style="cursor:pointer;padding:5px 10px;" onclick="sqFilter('all',this)">همه</button>
+          <button class="badge b-red" style="cursor:pointer;padding:5px 10px;" onclick="sqFilter('head',this)">🎯 هد</button>
+          <button class="badge b-blue" style="cursor:pointer;padding:5px 10px;" onclick="sqFilter('west',this)">🧥 وست</button>
+          <button class="badge b-purple" style="cursor:pointer;padding:5px 10px;color:var(--green);border-color:var(--green);background:rgba(0,255,136,0.08);" onclick="sqFilter('cheat',this)">⚡ چیت</button>
+        </div>
+        <div id="squads-list"></div>
+      </div>
+    </div>
+
+    <!-- GUILDS -->
+    <div id="pg-guilds" class="page">
+      <div class="sec">
+        <div class="sec-hdr"><div class="sec-title" style="color:var(--purple)">🏰 گیلدها</div><div class="sec-line" style="background:linear-gradient(90deg,var(--purple),transparent)"></div></div>
+        <div id="guilds-list"></div>
+      </div>
+    </div>
+
+    <!-- PLAYERS -->
+    <div id="pg-players" class="page">
+      <div class="sec">
+        <div style="display:flex;gap:6px;margin-bottom:12px;">
+          <button class="badge b-blue" style="cursor:pointer;padding:5px 10px;flex:1;text-align:center;" onclick="switchPlayerTab('list',this)">👤 لیست</button>
+          <button class="badge" style="cursor:pointer;padding:5px 10px;flex:1;text-align:center;border:1px solid rgba(232,0,13,0.3);color:var(--red);" onclick="switchPlayerTab('killers',this)">💀 کیلرها</button>
+          <button class="badge" style="cursor:pointer;padding:5px 10px;flex:1;text-align:center;border:1px solid rgba(255,215,0,0.3);color:var(--gold);" onclick="switchPlayerTab('mvp',this)">⭐ MVP</button>
+        </div>
+        <div id="ptab-list"><div id="players-list"></div></div>
+        <div id="ptab-killers" style="display:none"><div class="sec-hdr"><div class="sec-title" style="color:var(--red)">💀 برترین کیلرها</div><div class="sec-line"></div></div><div id="killers-list"></div></div>
+        <div id="ptab-mvp" style="display:none"><div class="sec-hdr"><div class="sec-title" style="color:var(--gold)">⭐ MVP</div><div class="sec-line" style="background:linear-gradient(90deg,var(--gold),transparent)"></div></div><p style="font-size:7px;color:#666;letter-spacing:1px;margin-bottom:12px;">امتیاز = کیل×۳ + دمیج÷۱۰۰ + بوچر×۵</p><div id="mvp-list"></div></div>
+      </div>
+    </div>
+
+    <!-- BRACKET -->
+    <div id="pg-bracket" class="page">
+      <div class="sec">
+        <div class="sec-hdr"><div class="sec-title">🗺️ براکت لیگ</div><div class="sec-line"></div></div>
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+          <button class="btn btn-outline btn-sm" style="width:auto;" onclick="genBracket()">🔀 تولید براکت</button>
+          <button class="btn btn-outline btn-sm" style="width:auto;" onclick="genH2H()">⚡ چیت به چیت</button>
+        </div>
+        <div id="bracket-stages"></div>
+        <div class="bracket-wrap"><div class="bracket-tree" id="bracket-tree"></div></div>
+        <div class="div"></div>
+        <div class="sec-hdr"><div class="sec-title" style="color:var(--red3)">⚡ چیت به چیت</div><div class="sec-line"></div></div>
+        <div id="h2h-list"></div>
+      </div>
+    </div>
+
+    <!-- PRIZES -->
+    <div id="pg-prizes" class="page">
+      <div class="sec">
+        <div class="sec-hdr"><div class="sec-title">🎁 جوایز</div><div class="sec-line"></div></div>
+        <div class="prize-grid" id="prizes-display"></div>
+      </div>
+    </div>
+
+  </div><!-- end content -->
+
+  <!-- BOTTOM NAV -->
+  <div class="bnav">
+    <button class="bnav-btn active" onclick="showPage('home',this)"><span class="icon">🏠</span><span class="label">خانه</span></button>
+    <button class="bnav-btn" onclick="showPage('squads',this)"><span class="icon">⚔️</span><span class="label">اسکواد</span></button>
+    <button class="bnav-btn" onclick="showPage('guilds',this)"><span class="icon">🏰</span><span class="label">گیلد</span></button>
+    <button class="bnav-btn" onclick="showPage('players',this)"><span class="icon">👤</span><span class="label">بازیکنان</span></button>
+    <button class="bnav-btn" onclick="showPage('bracket',this)"><span class="icon">🗺️</span><span class="label">براکت</span></button>
+    <button class="bnav-btn" onclick="showPage('prizes',this)"><span class="icon">🎁</span><span class="label">جوایز</span></button>
+  </div>
+
+  <!-- FAB -->
+  <button class="fab" id="fab-btn" onclick="handleFab()">＋</button>
+
+</div><!-- end app -->
+
+<!-- MODAL: ADD SQUAD -->
+<div class="modal-ov" id="modal-squad">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-squad')">✕</button>
+    <div class="modal-title">➕ ثبت اسکواد جدید</div>
+    <div class="fg"><label class="fl">نام اسکواد</label><input class="fi" id="sq-name" placeholder="نام اسکواد"></div>
+    <div class="fg"><label class="fl">نوع کاستوم</label>
+      <div class="rg">
+        <button class="rb sel" onclick="selType('sq-type','head',this)">🎯 هد</button>
+        <button class="rb" onclick="selType('sq-type','west',this)">🧥 وست</button>
+        <button class="rb" onclick="selType('sq-type','cheat',this)" style="border-color:rgba(0,255,136,0.3);color:var(--green);">⚡ چیت</button>
+      </div>
+      <input type="hidden" id="sq-type" value="head">
+    </div>
+    <div class="fg"><label class="fl">بازیکنان (آیدی عددی ۱۰ رقمی + اسم)</label>
+      <div id="player-fields"></div>
+    </div>
+    <div class="ma">
+      <button class="btn btn-red" onclick="addSquad()">✅ ثبت اسکواد</button>
+      <button class="btn btn-outline" onclick="closeModal('modal-squad')">انصراف</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: EDIT SQUAD -->
+<div class="modal-ov" id="modal-sq-edit">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-sq-edit')">✕</button>
+    <div class="modal-title">✏️ ویرایش اسکواد</div>
+    <input type="hidden" id="edit-sq-id">
+    <div class="fg"><label class="fl">نام اسکواد</label><input class="fi" id="edit-sq-name"></div>
+    <div class="fg"><label class="fl">نوع کاستوم</label>
+      <div class="rg" id="edit-sq-type-g">
+        <button class="rb" onclick="selType('edit-sq-type','head',this)">🎯 هد</button>
+        <button class="rb" onclick="selType('edit-sq-type','west',this)">🧥 وست</button>
+        <button class="rb" onclick="selType('edit-sq-type','cheat',this)" style="border-color:rgba(0,255,136,0.3);color:var(--green);">⚡ چیت</button>
+      </div>
+      <input type="hidden" id="edit-sq-type">
+    </div>
+    <div id="edit-player-fields"></div>
+    <div class="ma">
+      <button class="btn btn-red" onclick="saveSquadEdit()">💾 ذخیره</button>
+      <button class="btn btn-danger" onclick="deleteSquad()">🗑️ حذف</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ADD GUILD -->
+<div class="modal-ov" id="modal-guild">
+  <div class="modal guild-modal">
+    <button class="modal-close" onclick="closeModal('modal-guild')" style="border-color:rgba(168,85,247,0.3);">✕</button>
+    <div class="modal-title" style="color:var(--purple);border-bottom-color:rgba(168,85,247,0.2);">🏰 گیلد جدید</div>
+    <div class="fg"><label class="fl">نام گیلد</label><input class="fi fp" id="gl-name" placeholder="نام گیلد"></div>
+    <div class="fg"><label class="fl">تگ (حداکثر ۶ حرف)</label><input class="fi fp" id="gl-tag" placeholder="KMNDR" maxlength="6"></div>
+    <div class="fg"><label class="fl">آیکون</label><input class="fi fp" id="gl-icon" placeholder="🔥" maxlength="4"></div>
+    <div class="fg"><label class="fl">لیدر</label><input class="fi fp" id="gl-leader" placeholder="نام لیدر"></div>
+    <div class="fg"><label class="fl">توضیحات</label><textarea class="fi fp" id="gl-desc" rows="2" placeholder="درباره گیلد..."></textarea></div>
+    <div class="fg"><label class="fl">رنگ</label>
+      <div class="rg">
+        <button class="rb sel" onclick="selType('gl-color','purple',this)" style="border-color:rgba(168,85,247,0.4);color:#c084fc;">💜 بنفش</button>
+        <button class="rb" onclick="selType('gl-color','red',this)" style="border-color:rgba(232,0,13,0.3);color:var(--red3);">❤️ قرمز</button>
+        <button class="rb" onclick="selType('gl-color','blue',this)" style="border-color:rgba(0,170,255,0.3);color:var(--blue);">💙 آبی</button>
+        <button class="rb" onclick="selType('gl-color','gold',this)" style="border-color:rgba(255,215,0,0.3);color:var(--gold);">💛 طلایی</button>
+      </div>
+      <input type="hidden" id="gl-color" value="purple">
+    </div>
+    <div class="ma">
+      <button class="btn btn-purple" onclick="addGuild()">✅ ثبت گیلد</button>
+      <button class="btn btn-outline" onclick="closeModal('modal-guild')">انصراف</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: VIEW GUILD -->
+<div class="modal-ov" id="modal-guild-view">
+  <div class="modal guild-modal" style="max-height:85vh;">
+    <button class="modal-close" onclick="closeModal('modal-guild-view')" style="border-color:rgba(168,85,247,0.3);">✕</button>
+    <div id="guild-view-content"></div>
+  </div>
+</div>
+
+<!-- MODAL: ADD PLAYER -->
+<div class="modal-ov" id="modal-player">
+  <div class="modal player-modal">
+    <button class="modal-close" onclick="closeModal('modal-player')" style="border-color:rgba(0,170,255,0.3);">✕</button>
+    <div class="modal-title" style="color:var(--blue);border-bottom-color:rgba(0,170,255,0.2);">👤 بازیکن جدید</div>
+    <div class="fg"><label class="fl">نام بازیکن / آیدی</label><input class="fi fb" id="pl-name" placeholder="آیدی یا اسم فری فایر"></div>
+    <div class="fg"><label class="fl">گیلد</label>
+      <select class="fi fb fi-small" id="pl-guild"><option value="">بدون گیلد</option></select>
+    </div>
+    <div class="fg"><label class="fl">اسکواد</label>
+      <select class="fi fb fi-small" id="pl-squad"><option value="">بدون اسکواد</option></select>
+    </div>
+    <div class="fg"><label class="fl">رول</label>
+      <div class="rg">
+        <button class="rb sel" onclick="selType('pl-role','rusher',this)">🔴 راشر</button>
+        <button class="rb" onclick="selType('pl-role','sniper',this)">🎯 اسنایپر</button>
+        <button class="rb" onclick="selType('pl-role','support',this)">💊 ساپورت</button>
+        <button class="rb" onclick="selType('pl-role','leader',this)">👑 لیدر</button>
+      </div>
+      <input type="hidden" id="pl-role" value="rusher">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+      <div class="fg"><label class="fl">کیل</label><input class="fi fb fi-small" id="pl-kills" type="number" placeholder="0" min="0"></div>
+      <div class="fg"><label class="fl">دمیج</label><input class="fi fb fi-small" id="pl-dmg" type="number" placeholder="0" min="0"></div>
+      <div class="fg"><label class="fl">بوچر</label><input class="fi fb fi-small" id="pl-boy" type="number" placeholder="0" min="0"></div>
+    </div>
+    <div class="ma">
+      <button class="btn btn-blue" onclick="addPlayer()">✅ ثبت</button>
+      <button class="btn btn-outline" onclick="closeModal('modal-player')">انصراف</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: EDIT PLAYER -->
+<div class="modal-ov" id="modal-pl-edit">
+  <div class="modal player-modal">
+    <button class="modal-close" onclick="closeModal('modal-pl-edit')" style="border-color:rgba(0,170,255,0.3);">✕</button>
+    <div class="modal-title" style="color:var(--blue);border-bottom-color:rgba(0,170,255,0.2);">✏️ ویرایش بازیکن</div>
+    <input type="hidden" id="edit-pl-id">
+    <div class="fg"><label class="fl">نام</label><input class="fi fb" id="edit-pl-name"></div>
+    <div class="fg"><label class="fl">گیلد</label><select class="fi fb fi-small" id="edit-pl-guild"></select></div>
+    <div class="fg"><label class="fl">رول</label>
+      <div class="rg" id="edit-pl-role-g">
+        <button class="rb" onclick="selType('edit-pl-role','rusher',this)">🔴 راشر</button>
+        <button class="rb" onclick="selType('edit-pl-role','sniper',this)">🎯 اسنایپر</button>
+        <button class="rb" onclick="selType('edit-pl-role','support',this)">💊 ساپورت</button>
+        <button class="rb" onclick="selType('edit-pl-role','leader',this)">👑 لیدر</button>
+      </div>
+      <input type="hidden" id="edit-pl-role">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+      <div class="fg"><label class="fl">کیل</label><input class="fi fb fi-small" id="edit-pl-kills" type="number" min="0"></div>
+      <div class="fg"><label class="fl">دمیج</label><input class="fi fb fi-small" id="edit-pl-dmg" type="number" min="0"></div>
+      <div class="fg"><label class="fl">بوچر</label><input class="fi fb fi-small" id="edit-pl-boy" type="number" min="0"></div>
+    </div>
+    <div class="ma">
+      <button class="btn btn-blue" onclick="savePlEdit()">💾 ذخیره</button>
+      <button class="btn btn-danger" onclick="deletePl()">🗑️ حذف</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN LOCK -->
+<div class="lock-screen" id="lock-screen" style="display:none;">
+  <div class="lock-icon">🔐</div>
+  <div class="lock-title">پنل ادمین</div>
+  <div class="lock-sub">فقط برای ادمین — پسورد وارد کن</div>
+  <input class="lock-input" id="lock-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkPass()">
+  <div class="lock-err" id="lock-err"></div>
+  <button class="lock-btn" onclick="checkPass()">ورود</button>
+  <button class="btn btn-outline btn-sm" style="width:200px;margin-top:4px;" onclick="closeLock()">انصراف</button>
+</div>
+
+<!-- ADMIN MODAL -->
+<div class="modal-ov" id="modal-admin">
+  <div class="modal admin-modal" style="max-height:90vh;">
+    <button class="modal-close" onclick="closeModal('modal-admin')" style="border-color:rgba(255,215,0,0.3);">✕</button>
+    <div class="modal-title" style="color:var(--gold);border-bottom-color:rgba(255,215,0,0.2);">⚙️ پنل ادمین — KAMANDAR</div>
+
+    <div class="admin-section">
+      <div class="admin-section-title">🎮 تنظیمات لیگ</div>
+      <div class="fg"><label class="fl">نام لیگ</label><input class="fi" id="adm-name" value="KAMANDAR LEAGUE"></div>
+      <div class="fg"><label class="fl">سیزن</label><input class="fi" id="adm-season" value="1"></div>
+      <div class="fg"><label class="fl">حداکثر اسکواد</label><input class="fi" id="adm-maxsq" type="number" value="20"></div>
+      <button class="btn btn-red btn-sm" onclick="saveLeagueSettings()" style="margin-bottom:10px;">💾 ذخیره تنظیمات</button>
+    </div>
+
+    <div class="admin-section">
+      <div class="admin-section-title">🎁 جوایز</div>
+      <div class="fg"><label class="fl">🥇 جایزه اول</label><input class="fi" id="adm-p1" placeholder="مثلاً: ۱۰۰۰۰ دیاموند"></div>
+      <div class="fg"><label class="fl">توضیح اول</label><input class="fi" id="adm-p1s" placeholder="+ تیتل ویژه"></div>
+      <div class="fg"><label class="fl">🥈 جایزه دوم</label><input class="fi" id="adm-p2" placeholder="مثلاً: ۵۰۰۰ دیاموند"></div>
+      <div class="fg"><label class="fl">توضیح دوم</label><input class="fi" id="adm-p2s"></div>
+      <div class="fg"><label class="fl">🥉 جایزه سوم</label><input class="fi" id="adm-p3" placeholder="مثلاً: ۲۰۰۰ دیاموند"></div>
+      <div class="fg"><label class="fl">توضیح سوم</label><input class="fi" id="adm-p3s"></div>
+      <button class="btn btn-red btn-sm" onclick="savePrizes()" style="margin-bottom:10px;">💾 ذخیره جوایز</button>
+    </div>
+
+    <div class="admin-section">
+      <div class="admin-section-title">🗑️ ریست داده‌ها</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-danger btn-sm" style="width:auto;" onclick="resetBracket()">🔀 ریست براکت</button>
+        <button class="btn btn-danger btn-sm" style="width:auto;" onclick="resetAll()">⚠️ ریست کامل</button>
+      </div>
+    </div>
+
+    <div class="admin-section">
+      <div class="admin-section-title">📊 آمار کلی</div>
+      <div id="adm-stats" style="font-size:10px;color:var(--wh2);line-height:2;letter-spacing:1px;"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============ TELEGRAM INIT ============
+try{
+  if(window.Telegram&&window.Telegram.WebApp){
+    const tg=window.Telegram.WebApp;
+    tg.ready();tg.expand();
+    tg.setHeaderColor('#040404');
+    tg.setBackgroundColor('#040404');
+  }
+}catch(e){}
+
+// ============ STATE ============
+const ADMIN_PASS='abolsal1386';
+let S={
+  squads:[],guilds:[],players:[],
+  bracket:[],h2h:[],
+  prizes:{p1:'',p1s:'',p2:'',p2s:'',p3:'',p3s:''},
+  settings:{name:'KAMANDAR LEAGUE',season:1,maxSq:20},
+  matchesPlayed:0,currentStage:1
+};
+function save(){try{localStorage.setItem('kmdr_v4',JSON.stringify(S));}catch(e){}}
+function load(){try{const d=localStorage.getItem('kmdr_v4');if(d)S=JSON.parse(d);}catch(e){}}
+
+// ============ BG CANVAS ============
+const cv=document.getElementById('bgc'),cx=cv.getContext('2d');let pts=[];
+function initCv(){cv.width=innerWidth;cv.height=innerHeight;pts=[];for(let i=0;i<60;i++)pts.push({x:Math.random()*cv.width,y:Math.random()*cv.height,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,r:Math.random()*1.2+.3,a:Math.random()*.4+.1,red:Math.random()>.6});}
+function drawCv(){cx.clearRect(0,0,cv.width,cv.height);for(let i=0;i<pts.length;i++){for(let j=i+1;j<pts.length;j++){const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<100){cx.beginPath();cx.moveTo(pts[i].x,pts[i].y);cx.lineTo(pts[j].x,pts[j].y);const a=(1-d/100)*.1;cx.strokeStyle=pts[i].red?`rgba(232,0,13,${a})`:`rgba(255,255,255,${a*.3})`;cx.lineWidth=.5;cx.stroke();}}}for(let p of pts){p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=cv.width;if(p.x>cv.width)p.x=0;if(p.y<0)p.y=cv.height;if(p.y>cv.height)p.y=0;cx.beginPath();cx.arc(p.x,p.y,p.r,0,Math.PI*2);cx.fillStyle=p.red?`rgba(232,0,13,${p.a})`:`rgba(255,255,255,${p.a*.4})`;cx.fill();}requestAnimationFrame(drawCv);}
+window.addEventListener('resize',initCv);initCv();drawCv();
+
+// ============ TOAST ============
+function toast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.className='toast'+(type?' '+type:'');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+
+// ============ MODAL ============
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+// ============ PAGE NAV ============
+let curPage='home';
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('pg-'+id).classList.add('active');
+  if(btn)btn.classList.add('active');
+  curPage=id;
+  renderPage(id);
+  updateFab();
+}
+function renderPage(id){
+  if(id==='home')renderHome();
+  if(id==='squads')renderSquads();
+  if(id==='guilds')renderGuilds();
+  if(id==='players')renderPlayers();
+  if(id==='bracket'){renderBracket();renderH2H();}
+  if(id==='prizes')renderPrizes();
+}
+function updateFab(){
+  const fab=document.getElementById('fab-btn');
+  const icons={home:'',squads:'⚔',guilds:'🏰',players:'👤',bracket:'🔀',prizes:''};
+  fab.style.display=(icons[curPage]?'flex':'none');
+  if(icons[curPage])fab.textContent=icons[curPage];
+}
+function handleFab(){
+  if(curPage==='squads')openAddSquad();
+  if(curPage==='guilds')openAddGuild();
+  if(curPage==='players')openAddPlayer();
+  if(curPage==='bracket'){genBracket();}
+}
+
+// ============ HELPERS ============
+const typeLabel={head:'🎯 هد',west:'🧥 وست',cheat:'⚡ چیت'};
+const typeColor={head:'var(--red3)',west:'var(--blue)',cheat:'var(--green)'};
+const roleLabel={rusher:'🔴 راشر',sniper:'🎯 اسنایپر',support:'💊 ساپورت',leader:'👑 لیدر'};
+const gColors={purple:'var(--purple)',red:'var(--red3)',blue:'var(--blue)',gold:'var(--gold)'};
+function gc(id){return S.guilds.find(g=>g.id==id);}
+function gsc(id){return S.squads.find(s=>s.id==id);}
+
+function selType(hid,val,el){
+  document.getElementById(hid).value=val;
+  el.closest('.rg').querySelectorAll('.rb').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function rankColor(i){return i===0?'var(--gold)':i===1?'#c0c0c0':i===2?'#cd7f32':'rgba(255,255,255,0.2)';}
+
+// ID validation: exactly 10 digits
+function validID(id){return /^\d{10}$/.test(id.trim());}
+
+// Build player input fields
+function buildPlayerFields(containerId,prefix,players){
+  const c=document.getElementById(containerId);
+  c.innerHTML=['کاپیتان','بازیکن ۲','بازیکن ۳','بازیکن ۴'].map((lbl,i)=>`
+    <div style="margin-bottom:10px;">
+      <div class="fl" style="margin-bottom:4px;">${lbl}</div>
+      <div class="id-name-pair">
+        <div>
+          <input class="fi fi-small" id="${prefix}-id${i}" placeholder="آیدی ۱۰ رقمی" type="text" inputmode="numeric" maxlength="10" value="${players?players[i]?.id||'':''}">
+          <div class="field-hint">فقط ۱۰ عدد</div>
+          <div class="field-error" id="${prefix}-id${i}-err">آیدی باید ۱۰ رقم باشه!</div>
+        </div>
+        <div>
+          <input class="fi fi-small" id="${prefix}-nm${i}" placeholder="اسم بازیکن" value="${players?players[i]?.name||'':''}">
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function getPlayerFields(prefix){
+  const players=[];
+  for(let i=0;i<4;i++){
+    const idEl=document.getElementById(`${prefix}-id${i}`);
+    const nmEl=document.getElementById(`${prefix}-nm${i}`);
+    const errEl=document.getElementById(`${prefix}-id${i}-err`);
+    const idVal=idEl.value.trim();
+    const nmVal=nmEl.value.trim()||`بازیکن ${i+1}`;
+    if(idVal&&!validID(idVal)){
+      errEl.style.display='block';idEl.style.borderColor='var(--red3)';
+      return null;
+    }
+    errEl.style.display='none';idEl.style.borderColor='';
+    players.push({id:idVal||'—',name:nmVal});
+  }
+  return players;
+}
+
+// ============ SQUADS ============
+let sqCurFilter='all';
+function openAddSquad(){
+  document.getElementById('sq-name').value='';
+  document.getElementById('sq-type').value='head';
+  document.querySelectorAll('#modal-squad .rb').forEach((b,i)=>b.classList.toggle('sel',i===0));
+  buildPlayerFields('player-fields','sq',null);
+  openModal('modal-squad');
+}
+function addSquad(){
+  const name=document.getElementById('sq-name').value.trim();
+  if(!name){toast('⚠️ نام اسکواد وارد کن','warn');return;}
+  if(S.squads.length>=S.settings.maxSq){toast('⚠️ ظرفیت پر شده!','warn');return;}
+  const players=getPlayerFields('sq');
+  if(!players)return;
+  const type=document.getElementById('sq-type').value;
+  S.squads.push({id:Date.now(),name,type,players,wins:0,stage:1,eliminated:false});
+  save();closeModal('modal-squad');renderSquads();renderHome();toast('✅ اسکواد '+name+' ثبت شد!','success');
+}
+function sqFilter(type,el){
+  sqCurFilter=type;renderSquads();
+}
+function renderSquads(){
+  const c=document.getElementById('squads-list');
+  let list=S.squads;
+  if(sqCurFilter!=='all')list=list.filter(s=>s.type===sqCurFilter);
+  if(!list.length){c.innerHTML=`<div class="empty"><div class="empty-icon">⚔️</div><div class="empty-text">اسکوادی ثبت نشده</div></div>`;return;}
+  const sorted=[...S.squads].sort((a,b)=>b.wins-a.wins);
+  c.innerHTML=list.map(s=>{
+    const rank=sorted.indexOf(s)+1;
+    const col=typeColor[s.type]||'var(--red3)';
+    return `<div class="card" style="${s.eliminated?'opacity:0.45;':''}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+        <div>
+          <div style="font-size:14px;font-weight:900;color:#fff;letter-spacing:2px;">${s.name}</div>
+          <div style="font-size:8px;color:${col};letter-spacing:2px;margin-top:2px;">${typeLabel[s.type]}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+          <span style="font-size:22px;font-weight:900;color:${rank<=3?rankColor(rank-1):'rgba(255,255,255,0.12)'};">#${rank}</span>
+          ${s.eliminated?'<span class="badge b-gray">حذف</span>':`<span class="badge b-gold">مرحله ${s.stage}</span>`}
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:10px;">
+        ${s.players.map((p,j)=>`<div class="member-slot">
+          <div class="m-dot" style="background:${j===0?'var(--gold)':'var(--red2)'};"></div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:10px;color:${j===0?'#fff':'#bbb'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name||'—'}</div>
+            <div style="font-size:7px;color:#555;letter-spacing:1px;">${p.id||'—'}</div>
+          </div>
+        </div>`).join('')}
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:#666;">برد: <span style="color:var(--gold);font-weight:900;">${s.wins}</span></div>
+        <button class="btn btn-outline btn-sm" style="width:auto;" onclick="openSquadEdit(${s.id})">✏️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function openSquadEdit(id){
+  const s=S.squads.find(s=>s.id===id);if(!s)return;
+  document.getElementById('edit-sq-id').value=id;
+  document.getElementById('edit-sq-name').value=s.name;
+  document.getElementById('edit-sq-type').value=s.type;
+  const types=['head','west','cheat'];
+  document.querySelectorAll('#edit-sq-type-g .rb').forEach((b,i)=>b.classList.toggle('sel',types[i]===s.type));
+  buildPlayerFields('edit-player-fields','esq',s.players);
+  openModal('modal-sq-edit');
+}
+function saveSquadEdit(){
+  const id=parseInt(document.getElementById('edit-sq-id').value);
+  const s=S.squads.find(s=>s.id===id);if(!s)return;
+  const name=document.getElementById('edit-sq-name').value.trim();
+  const players=getPlayerFields('esq');
+  if(!players)return;
+  s.name=name||s.name;
+  s.type=document.getElementById('edit-sq-type').value;
+  s.players=players;
+  save();closeModal('modal-sq-edit');renderSquads();renderHome();toast('✅ ذخیره شد','success');
+}
+function deleteSquad(){
+  if(!confirm('اسکواد حذف بشه؟'))return;
+  const id=parseInt(document.getElementById('edit-sq-id').value);
+  S.squads=S.squads.filter(s=>s.id!==id);
+  save();closeModal('modal-sq-edit');renderSquads();renderHome();toast('🗑️ حذف شد');
+}
+
+// ============ GUILDS ============
+function openAddGuild(){
+  ['gl-name','gl-tag','gl-icon','gl-leader','gl-desc'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('gl-color').value='purple';
+  document.querySelectorAll('#modal-guild .rb').forEach((b,i)=>b.classList.toggle('sel',i===0));
+  openModal('modal-guild');
+}
+function addGuild(){
+  const name=document.getElementById('gl-name').value.trim();
+  if(!name){toast('⚠️ نام گیلد وارد کن','warn');return;}
+  S.guilds.push({id:Date.now(),name,tag:document.getElementById('gl-tag').value.trim().toUpperCase()||'----',icon:document.getElementById('gl-icon').value.trim()||'🏰',leader:document.getElementById('gl-leader').value.trim()||'نامشخص',desc:document.getElementById('gl-desc').value.trim(),color:document.getElementById('gl-color').value,kills:0,wins:0});
+  save();closeModal('modal-guild');renderGuilds();renderHome();toast('✅ گیلد ثبت شد!','success');
+}
+function renderGuilds(){
+  const c=document.getElementById('guilds-list');
+  const sorted=[...S.guilds].sort((a,b)=>b.kills-a.kills);
+  if(!sorted.length){c.innerHTML=`<div class="empty"><div class="empty-icon">🏰</div><div class="empty-text">گیلدی ثبت نشده</div></div>`;return;}
+  c.innerHTML=sorted.map((g,i)=>{
+    const col=gColors[g.color]||'var(--purple)';
+    const mc=S.players.filter(p=>p.guildId==g.id).length;
+    return `<div class="card guild-card" style="border-color:${col}33;" onclick="viewGuild(${g.id})">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+        <div style="width:46px;height:46px;border-radius:50%;background:${col}18;border:2px solid ${col}55;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;box-shadow:0 0 12px ${col}33;">${g.icon}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:900;color:#fff;letter-spacing:1px;">${g.name}</div>
+          <div style="font-size:9px;color:${col};letter-spacing:2px;">[${g.tag}]</div>
+        </div>
+        <div style="font-size:${i<3?'24':'14'}px;font-weight:900;color:${rankColor(i)};">#${i+1}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+        <div style="background:rgba(255,255,255,0.03);padding:7px;text-align:center;">
+          <div style="font-size:16px;font-weight:900;color:var(--red3);">${g.kills}</div>
+          <div style="font-size:7px;color:#666;">کیل</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);padding:7px;text-align:center;">
+          <div style="font-size:16px;font-weight:900;color:var(--gold);">${g.wins}</div>
+          <div style="font-size:7px;color:#666;">برد</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);padding:7px;text-align:center;">
+          <div style="font-size:16px;font-weight:900;color:${col};">${mc}</div>
+          <div style="font-size:7px;color:#666;">عضو</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function viewGuild(id){
+  const g=S.guilds.find(g=>g.id===id);if(!g)return;
+  const col=gColors[g.color]||'var(--purple)';
+  const members=S.players.filter(p=>p.guildId==id).sort((a,b)=>b.kills-a.kills);
+  const sorted=[...S.guilds].sort((a,b)=>b.kills-a.kills);
+  const rank=sorted.indexOf(g)+1;
+  document.getElementById('guild-view-content').innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div style="font-size:10px;letter-spacing:2px;color:${col};">🏰 پروفایل گیلد</div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-sm" style="width:auto;background:${col}22;border:1px solid ${col}44;color:${col};clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);" onclick="editGuildStats(${id})">✏️ آمار</button>
+        <button class="btn btn-danger btn-sm" style="width:auto;" onclick="deleteGuild(${id})">🗑️</button>
+      </div>
+    </div>
+    <div class="guild-header">
+      <div class="guild-avatar" style="background:${col}18;border:2px solid ${col}55;box-shadow:0 0 18px ${col}33;">${g.icon}</div>
+      <div>
+        <div class="guild-meta-name">${g.name}</div>
+        <div class="guild-meta-tag" style="color:${col};">[${g.tag}] · رتبه #${rank}</div>
+        ${g.desc?`<div style="font-size:10px;color:#888;line-height:1.5;">${g.desc}</div>`:''}
+        <div style="font-size:8px;color:#555;margin-top:6px;">لیدر: <span style="color:#aaa;">${g.leader}</span></div>
+      </div>
+    </div>
+    <div class="guild-stats">
+      <div class="guild-stat"><span class="guild-stat-num" style="color:var(--red3);">${g.kills}</span><span class="guild-stat-lbl">کیل کل</span></div>
+      <div class="guild-stat"><span class="guild-stat-num" style="color:var(--gold);">${g.wins}</span><span class="guild-stat-lbl">برد کل</span></div>
+      <div class="guild-stat"><span class="guild-stat-num" style="color:${col};">${members.length}</span><span class="guild-stat-lbl">عضو</span></div>
+    </div>
+    <div style="font-size:9px;letter-spacing:2px;color:${col};margin-bottom:10px;">👥 اعضا</div>
+    ${members.length?members.map(p=>`<div class="member-row">
+      <div style="font-size:8px;color:${col};">${roleLabel[p.role]||p.role}</div>
+      <div style="flex:1;font-size:11px;color:#fff;">${p.name}</div>
+      <div style="font-size:12px;font-weight:900;color:var(--red3);">${p.kills}💀</div>
+      <div style="font-size:12px;font-weight:900;color:var(--blue);margin-right:8px;">${p.damage||0}🎯</div>
+    </div>`).join(''):`<div style="text-align:center;padding:16px;color:#555;font-size:9px;">هنوز عضوی ثبت نشده</div>`}
+  `;
+  openModal('modal-guild-view');
+}
+function editGuildStats(id){
+  const g=S.guilds.find(g=>g.id===id);if(!g)return;
+  const kills=prompt('کیل کل گیلد:',g.kills);
+  const wins=prompt('برد کل گیلد:',g.wins);
+  if(kills!==null&&!isNaN(+kills))g.kills=+kills;
+  if(wins!==null&&!isNaN(+wins))g.wins=+wins;
+  save();closeModal('modal-guild-view');renderGuilds();renderHome();toast('✅ آمار آپدیت شد','success');
+}
+function deleteGuild(id){
+  if(!confirm('گیلد حذف بشه؟'))return;
+  S.guilds=S.guilds.filter(g=>g.id!==id);
+  S.players.forEach(p=>{if(p.guildId==id)p.guildId=null;});
+  save();closeModal('modal-guild-view');renderGuilds();renderHome();toast('🗑️ حذف شد');
+}
+
+// ============ PLAYERS ============
+function openAddPlayer(){
+  const gOpts=`<option value="">بدون گیلد</option>`+S.guilds.map(g=>`<option value="${g.id}">${g.icon} ${g.name}</option>`).join('');
+  const sOpts=`<option value="">بدون اسکواد</option>`+S.squads.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  document.getElementById('pl-guild').innerHTML=gOpts;
+  document.getElementById('pl-squad').innerHTML=sOpts;
+  ['pl-name','pl-kills','pl-dmg','pl-boy'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('pl-role').value='rusher';
+  document.querySelectorAll('#modal-player .rb').forEach((b,i)=>b.classList.toggle('sel',i===0));
+  openModal('modal-player');
+}
+function addPlayer(){
+  const name=document.getElementById('pl-name').value.trim();
+  if(!name){toast('⚠️ نام بازیکن وارد کن','warn');return;}
+  const kills=parseInt(document.getElementById('pl-kills').value)||0;
+  const pl={id:Date.now(),name,guildId:document.getElementById('pl-guild').value||null,squadId:document.getElementById('pl-squad').value||null,role:document.getElementById('pl-role').value,kills,damage:parseInt(document.getElementById('pl-dmg').value)||0,booyah:parseInt(document.getElementById('pl-boy').value)||0};
+  if(pl.guildId){const g=gc(pl.guildId);if(g)g.kills+=kills;}
+  S.players.push(pl);
+  save();closeModal('modal-player');renderPlayers();renderHome();renderGuilds();toast('✅ بازیکن ثبت شد!','success');
+}
+let curPlayerTab='list';
+function switchPlayerTab(tab,el){
+  curPlayerTab=tab;
+  ['list','killers','mvp'].forEach(t=>{document.getElementById('ptab-'+t).style.display=t===tab?'block':'none';});
+  if(tab==='killers')renderKillers();
+  if(tab==='mvp')renderMVP();
+}
+function renderPlayers(){
+  const c=document.getElementById('players-list');
+  const sorted=[...S.players].sort((a,b)=>b.kills-a.kills);
+  if(!sorted.length){c.innerHTML=`<div class="empty"><div class="empty-icon">👤</div><div class="empty-text">بازیکنی ثبت نشده</div></div>`;return;}
+  c.innerHTML=sorted.map((p,i)=>{
+    const g=gc(p.guildId);const col=g?gColors[g.color]||'var(--purple)':'var(--blue)';
+    return `<div class="card player-card">
+      <div style="display:flex;align-items:flex-start;gap:10px;">
+        <div style="font-size:18px;font-weight:900;color:${rankColor(i)};min-width:28px;">#${i+1}</div>
+        <div style="flex:1;">
+          <div style="font-size:12px;font-weight:900;color:#fff;">${p.name}</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px;">
+            <span class="badge b-blue">${roleLabel[p.role]||p.role}</span>
+            ${g?`<span class="badge b-purple" style="border-color:${col}55;color:${col};">${g.icon} ${g.tag}</span>`:''}
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <div style="text-align:center;">
+            <div class="kill-num">${p.kills}</div>
+            <div style="font-size:7px;color:#666;">کیل</div>
+          </div>
+          <button class="btn btn-outline btn-sm" style="width:auto;" onclick="openPlEdit(${p.id})">✏️</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function renderKillers(){
+  const c=document.getElementById('killers-list');
+  const sorted=[...S.players].sort((a,b)=>b.kills-a.kills).slice(0,20);
+  if(!sorted.length){c.innerHTML=`<div class="empty"><div class="empty-icon">💀</div><div class="empty-text">بازیکنی ثبت نشده</div></div>`;return;}
+  c.innerHTML=sorted.map((p,i)=>{
+    const g=gc(p.guildId);
+    return `<div class="lb-row">
+      <div class="lb-rank" style="color:${rankColor(i)};">${i+1}</div>
+      <div style="font-size:${i<3?'22':'16'}px;">${['💀','🔫','🎯','⚔️','🏹'][i%5]}</div>
+      <div class="lb-info">
+        <div class="lb-name">${p.name}</div>
+        ${g?`<div class="lb-sub">${g.icon} ${g.name}</div>`:''}
+      </div>
+      <div style="text-align:center;">
+        <div class="lb-val" style="color:var(--red3);">${p.kills}</div>
+        <div style="font-size:7px;color:#666;">کیل</div>
+      </div>
+      <div style="text-align:center;margin-right:8px;">
+        <div class="lb-val" style="color:var(--blue);font-size:13px;">${p.damage||0}</div>
+        <div style="font-size:7px;color:#666;">دمیج</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function renderMVP(){
+  const c=document.getElementById('mvp-list');
+  const scored=S.players.map(p=>({...p,score:p.kills*3+(p.damage||0)/100+(p.booyah||0)*5})).sort((a,b)=>b.score-a.score).slice(0,20);
+  if(!scored.length){c.innerHTML=`<div class="empty"><div class="empty-icon">⭐</div><div class="empty-text">بازیکنی ثبت نشده</div></div>`;return;}
+  c.innerHTML=scored.map((p,i)=>{
+    const g=gc(p.guildId);
+    return `<div class="lb-row">
+      <div class="lb-rank" style="color:${rankColor(i)};">${i+1}</div>
+      <div style="font-size:${i<3?'22':'16'}px;">${['⭐','🌟','✨','💫','🏆'][i%5]}</div>
+      <div class="lb-info">
+        <div class="lb-name">${p.name}</div>
+        ${g?`<div class="lb-sub">${g.icon} ${g.name}</div>`:''}
+      </div>
+      <div style="text-align:center;">
+        <div class="lb-val" style="color:var(--gold);font-size:${i<3?'20':'14'}px;">${Math.round(p.score)}</div>
+        <div style="font-size:7px;color:#666;">امتیاز</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function openPlEdit(id){
+  const p=S.players.find(p=>p.id===id);if(!p)return;
+  const gOpts=`<option value="">بدون گیلد</option>`+S.guilds.map(g=>`<option value="${g.id}" ${g.id==p.guildId?'selected':''}>${g.icon} ${g.name}</option>`).join('');
+  document.getElementById('edit-pl-guild').innerHTML=gOpts;
+  document.getElementById('edit-pl-id').value=id;
+  document.getElementById('edit-pl-name').value=p.name;
+  document.getElementById('edit-pl-role').value=p.role;
+  document.getElementById('edit-pl-kills').value=p.kills||0;
+  document.getElementById('edit-pl-dmg').value=p.damage||0;
+  document.getElementById('edit-pl-boy').value=p.booyah||0;
+  const roles=['rusher','sniper','support','leader'];
+  document.querySelectorAll('#edit-pl-role-g .rb').forEach((b,i)=>b.classList.toggle('sel',roles[i]===p.role));
+  openModal('modal-pl-edit');
+}
+function savePlEdit(){
+  const id=parseInt(document.getElementById('edit-pl-id').value);
+  const p=S.players.find(p=>p.id===id);if(!p)return;
+  if(p.guildId){const og=gc(p.guildId);if(og)og.kills=Math.max(0,og.kills-p.kills);}
+  p.name=document.getElementById('edit-pl-name').value.trim()||p.name;
+  p.guildId=document.getElementById('edit-pl-guild').value||null;
+  p.role=document.getElementById('edit-pl-role').value;
+  p.kills=parseInt(document.getElementById('edit-pl-kills').value)||0;
+  p.damage=parseInt(document.getElementById('edit-pl-dmg').value)||0;
+  p.booyah=parseInt(document.getElementById('edit-pl-boy').value)||0;
+  if(p.guildId){const ng=gc(p.guildId);if(ng)ng.kills+=p.kills;}
+  save();closeModal('modal-pl-edit');renderPlayers();renderHome();renderGuilds();toast('✅ ذخیره شد','success');
+}
+function deletePl(){
+  const id=parseInt(document.getElementById('edit-pl-id').value);
+  const p=S.players.find(p=>p.id===id);
+  if(p&&p.guildId){const g=gc(p.guildId);if(g)g.kills=Math.max(0,g.kills-p.kills);}
+  if(!confirm('بازیکن حذف بشه؟'))return;
+  S.players=S.players.filter(p=>p.id!==id);
+  save();closeModal('modal-pl-edit');renderPlayers();renderHome();renderGuilds();toast('🗑️ حذف شد');
+}
+
+// ============ BRACKET (TREE) ============
+function genBracket(){
+  const active=S.squads.filter(s=>!s.eliminated);
+  if(active.length<2){toast('⚠️ حداقل ۲ اسکواد فعال','warn');return;}
+  const sh=[...active].sort(()=>Math.random()-.5);
+  const ms=[];
+  for(let i=0;i<sh.length-1;i+=2)ms.push({id:Date.now()+i,t1:sh[i].id,t2:sh[i+1]?.id||null,winner:null,round:1});
+  S.bracket=ms;save();renderBracket();toast('🔀 براکت تولید شد!','success');
+}
+function setWinner(mid,tid){
+  const m=S.bracket.find(m=>m.id===mid);if(!m||m.winner)return;
+  m.winner=tid;
+  const loser=tid===m.t1?m.t2:m.t1;
+  const ws=gsc(tid),ls=gsc(loser);
+  if(ws){ws.wins++;ws.stage++;}if(ls)ls.eliminated=true;
+  S.matchesPlayed++;
+  S.currentStage=Math.max(...S.squads.filter(s=>!s.eliminated).map(s=>s.stage),1);
+  save();renderBracket();renderHome();toast('✅ برنده ثبت شد!','success');
+}
+function renderBracket(){
+  const stages=document.getElementById('bracket-stages');
+  const sc=5;
+  stages.innerHTML=`<div style="display:flex;align-items:center;gap:0;overflow-x:auto;padding-bottom:8px;margin-bottom:12px;">
+    ${Array.from({length:sc},(_,i)=>`
+      <div style="display:flex;align-items:center;flex-shrink:0;">
+        <div style="width:28px;height:28px;border-radius:50%;border:2px solid ${i+1<S.currentStage?'var(--gold)':i+1===S.currentStage?'var(--red)':'rgba(232,0,13,0.25)'};background:${i+1<S.currentStage?'rgba(255,215,0,0.1)':i+1===S.currentStage?'rgba(232,0,13,0.18)':'var(--blk2)'};display:flex;align-items:center;justify-content:center;font-size:9px;color:${i+1<S.currentStage?'var(--gold)':i+1===S.currentStage?'#fff':'#555'};box-shadow:${i+1===S.currentStage?'0 0 10px rgba(232,0,13,0.4)':'none'};">${i+1<S.currentStage?'✓':i+1}</div>
+        <div style="margin-right:5px;font-size:7px;color:${i+1===S.currentStage?'var(--red)':'#555'};letter-spacing:1px;white-space:nowrap;">${['گروهی','۱/۸','۱/۴','نیمه','فینال'][i]}</div>
+        ${i<sc-1?`<div style="width:20px;height:1px;background:rgba(232,0,13,0.2);flex-shrink:0;"></div>`:''}
+      </div>
+    `).join('')}
+  </div>`;
+
+  const tree=document.getElementById('bracket-tree');
+  if(!S.bracket.length){tree.innerHTML=`<div class="empty" style="width:100%;"><div class="empty-icon">🗺️</div><div class="empty-text">براکت تولید نشده</div></div>`;return;}
+
+  const gs=id=>gsc(id);
+  // Group matches by round
+  const rounds={};
+  S.bracket.forEach(m=>{const r=m.round||1;if(!rounds[r])rounds[r]=[];rounds[r].push(m);});
+  const roundNames=['گروهی','یک هشتم','یک چهارم','نیمه نهایی','فینال'];
+
+  tree.innerHTML=Object.keys(rounds).map(r=>`
+    <div class="b-round">
+      <div class="b-round-title">${roundNames[(r-1)%5]||'دور '+r}</div>
+      <div class="b-matches">
+        ${rounds[r].map(m=>{
+          const t1=gs(m.t1),t2=gs(m.t2);
+          return `<div class="b-match">
+            <div class="b-team ${m.winner===m.t1?'winner':''} ${!t1?'empty':''}" onclick="${!m.winner&&t1&&t2?`setWinner(${m.id},${m.t1})`:''}" style="cursor:${!m.winner&&t1&&t2?'pointer':'default'}">
+              ${t1?t1.name:'—'}
+            </div>
+            <div class="b-team ${m.winner===m.t2?'winner':''} ${!t2?'empty':''}" onclick="${!m.winner&&t1&&t2?`setWinner(${m.id},${m.t2})`:''}" style="cursor:${!m.winner&&t1&&t2?'pointer':'default'}">
+              ${t2?t2.name:'بای'}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `).join(`<div style="display:flex;align-items:center;"><div style="width:1px;height:80px;background:linear-gradient(180deg,transparent,rgba(232,0,13,0.4),transparent);"></div><div style="width:12px;height:1px;background:rgba(232,0,13,0.3);"></div></div>`);
+}
+
+// ============ H2H ============
+function genH2H(){
+  const active=S.squads.filter(s=>!s.eliminated);
+  if(active.length<2){toast('⚠️ حداقل ۲ اسکواد','warn');return;}
+  const sh=[...active].sort(()=>Math.random()-.5);
+  const ms=[];
+  for(let i=0;i<sh.length-1;i+=2)if(sh[i+1])ms.push({id:Date.now()+i+1000,t1:sh[i].id,t2:sh[i+1].id,winner:null});
+  S.h2h=ms;save();renderH2H();toast('⚡ مچ‌های چیت به چیت تولید شد!','success');
+}
+function setH2HW(mid,tid){
+  const m=S.h2h.find(m=>m.id===mid);if(!m||m.winner)return;
+  m.winner=tid;
+  const loser=tid===m.t1?m.t2:m.t1;
+  const ws=gsc(tid),ls=gsc(loser);
+  if(ws){ws.wins++;ws.stage=Math.max(ws.stage,S.currentStage+1);}
+  if(ls)ls.eliminated=true;
+  S.matchesPlayed++;save();renderH2H();renderHome();toast('✅ برنده ثبت شد!','success');
+}
+function renderH2H(){
+  const c=document.getElementById('h2h-list');
+  if(!S.h2h.length){c.innerHTML=`<div class="empty"><div class="empty-icon">⚡</div><div class="empty-text">مچ چیت به چیت تولید نشده</div></div>`;return;}
+  c.innerHTML=S.h2h.map((m,i)=>{
+    const t1=gsc(m.t1),t2=gsc(m.t2),w=m.winner;
+    return `<div class="h2h-card">
+      <div style="font-size:9px;color:#444;min-width:20px;">${i+1}</div>
+      <div class="h2h-team">
+        <div class="h2h-name" style="${w===m.t1?'color:var(--red3);':w&&w!==m.t1?'opacity:0.3;':''}">${t1?.name||'—'}</div>
+        <div class="h2h-sub">${typeLabel[t1?.type]||''}</div>
+      </div>
+      <div class="h2h-vs">VS</div>
+      <div class="h2h-team">
+        <div class="h2h-name" style="${w===m.t2?'color:var(--red3);':w&&w!==m.t2?'opacity:0.3;':''}">${t2?.name||'—'}</div>
+        <div class="h2h-sub">${typeLabel[t2?.type]||''}</div>
+      </div>
+      ${!w?`<div class="h2h-actions">
+        <button class="h2h-btn" onclick="setH2HW(${m.id},${m.t1})">برد ${t1?.name||'۱'}</button>
+        <button class="h2h-btn" onclick="setH2HW(${m.id},${m.t2})">برد ${t2?.name||'۲'}</button>
+      </div>`:`<div style="font-size:9px;color:var(--gold);min-width:60px;text-align:center;">🏆<br>${gsc(w)?.name||''}</div>`}
+    </div>`;
+  }).join('');
+}
+
+// ============ PRIZES ============
+function renderPrizes(){
+  const g=document.getElementById('prizes-display');
+  const pz=[{cls:'p1',num:'۱',title:'قهرمان',v:S.prizes.p1||'🏆 جایزه اول',s:S.prizes.p1s},{cls:'p2',num:'۲',title:'نایب',v:S.prizes.p2||'🥈 جایزه دوم',s:S.prizes.p2s},{cls:'p3',num:'۳',title:'سوم',v:S.prizes.p3||'🥉 جایزه سوم',s:S.prizes.p3s}];
+  g.innerHTML=pz.map(p=>`<div class="prize-card ${p.cls}">
+    <div class="prize-num">${p.num}</div>
+    <div class="prize-title">${p.title}</div>
+    <div class="prize-val">${p.v}</div>
+    ${p.s?`<div class="prize-sub">${p.s}</div>`:''}
+  </div>`).join('');
+}
+
+// ============ HOME ============
+function renderHome(){
+  document.getElementById('st-sq').textContent=S.squads.length;
+  document.getElementById('st-gl').textContent=S.guilds.length;
+  document.getElementById('st-pl').textContent=S.players.length;
+  document.getElementById('st-mt').textContent=S.matchesPlayed;
+
+  // Squad LB
+  const slb=document.getElementById('home-sq-lb');
+  const ss=[...S.squads].sort((a,b)=>b.wins-a.wins);
+  if(!ss.length){slb.innerHTML=`<div class="empty"><div class="empty-icon">⚔️</div><div class="empty-text">اسکوادی ثبت نشده</div></div>`;}
+  else slb.innerHTML=ss.slice(0,5).map((s,i)=>`<div class="lb-row">
+    <div class="lb-rank" style="color:${rankColor(i)};">${i+1}</div>
+    <div class="lb-info"><div class="lb-name">${s.name}</div><div class="lb-sub" style="color:${typeColor[s.type]||'var(--red)'};">${typeLabel[s.type]}</div></div>
+    <div class="lb-val" style="color:var(--red3);">${s.wins}</div>
+  </div>`).join('');
+
+  // Guild LB
+  const glb=document.getElementById('home-gl-lb');
+  const gs=[...S.guilds].sort((a,b)=>b.kills-a.kills);
+  if(!gs.length){glb.innerHTML=`<div class="empty"><div class="empty-icon">🏰</div><div class="empty-text">گیلدی ثبت نشده</div></div>`;}
+  else glb.innerHTML=gs.slice(0,5).map((g,i)=>{const col=gColors[g.color]||'var(--purple)';return`<div class="lb-row" onclick="showPage('guilds',document.querySelectorAll('.bnav-btn')[2]);viewGuild(${g.id});" style="cursor:pointer;">
+    <div class="lb-rank" style="color:${rankColor(i)};">${i+1}</div>
+    <div style="font-size:18px;">${g.icon}</div>
+    <div class="lb-info"><div class="lb-name">${g.name}</div><div class="lb-sub" style="color:${col};">[${g.tag}]</div></div>
+    <div class="lb-val" style="color:var(--red3);">${g.kills}💀</div>
+  </div>`}).join('');
+
+  // Killers LB
+  const klb=document.getElementById('home-kl-lb');
+  const kl=[...S.players].sort((a,b)=>b.kills-a.kills).slice(0,5);
+  if(!kl.length){klb.innerHTML=`<div class="empty"><div class="empty-icon">💀</div><div class="empty-text">بازیکنی ثبت نشده</div></div>`;}
+  else klb.innerHTML=kl.map((p,i)=>{const g=gc(p.guildId);return`<div class="lb-row">
+    <div class="lb-rank" style="color:${rankColor(i)};">${i+1}</div>
+    <div style="font-size:16px;">💀</div>
+    <div class="lb-info"><div class="lb-name">${p.name}</div>${g?`<div class="lb-sub" style="color:${gColors[g.color]||'var(--purple)'};">${g.icon} ${g.name}</div>`:''}</div>
+    <div class="lb-val" style="color:var(--red3);">${p.kills}</div>
+  </div>`}).join('');
+}
+
+// ============ ADMIN ============
+function openAdminLock(){document.getElementById('lock-pass').value='';document.getElementById('lock-err').textContent='';document.getElementById('lock-screen').style.display='flex';}
+function closeLock(){document.getElementById('lock-screen').style.display='none';}
+function checkPass(){
+  const v=document.getElementById('lock-pass').value;
+  if(v===ADMIN_PASS){closeLock();openAdminPanel();}
+  else{document.getElementById('lock-err').textContent='❌ پسورد اشتباهه!';document.getElementById('lock-pass').value='';}
+}
+function openAdminPanel(){
+  document.getElementById('adm-name').value=S.settings.name;
+  document.getElementById('adm-season').value=S.settings.season;
+  document.getElementById('adm-maxsq').value=S.settings.maxSq;
+  document.getElementById('adm-p1').value=S.prizes.p1||'';
+  document.getElementById('adm-p1s').value=S.prizes.p1s||'';
+  document.getElementById('adm-p2').value=S.prizes.p2||'';
+  document.getElementById('adm-p2s').value=S.prizes.p2s||'';
+  document.getElementById('adm-p3').value=S.prizes.p3||'';
+  document.getElementById('adm-p3s').value=S.prizes.p3s||'';
+  document.getElementById('adm-stats').innerHTML=`اسکواد: ${S.squads.length} | گیلد: ${S.guilds.length} | بازیکن: ${S.players.length} | مچ: ${S.matchesPlayed} | مرحله: ${S.currentStage}`;
+  openModal('modal-admin');
+}
+function saveLeagueSettings(){
+  S.settings.name=document.getElementById('adm-name').value;
+  S.settings.season=parseInt(document.getElementById('adm-season').value)||1;
+  S.settings.maxSq=parseInt(document.getElementById('adm-maxsq').value)||20;
+  save();toast('✅ تنظیمات ذخیره شد','success');
+}
+function savePrizes(){
+  S.prizes={p1:document.getElementById('adm-p1').value,p1s:document.getElementById('adm-p1s').value,p2:document.getElementById('adm-p2').value,p2s:document.getElementById('adm-p2s').value,p3:document.getElementById('adm-p3').value,p3s:document.getElementById('adm-p3s').value};
+  save();renderPrizes();toast('💾 جوایز ذخیره شد','success');
+}
+function resetBracket(){if(!confirm('براکت ریست بشه؟'))return;S.bracket=[];S.h2h=[];S.matchesPlayed=0;S.currentStage=1;S.squads.forEach(s=>{s.wins=0;s.stage=1;s.eliminated=false;});save();renderBracket();renderHome();toast('🔀 براکت ریست شد');}
+function resetAll(){if(!confirm('⚠️ همه چیز پاک میشه! مطمئنی؟'))return;S={squads:[],guilds:[],players:[],bracket:[],h2h:[],prizes:{p1:'',p1s:'',p2:'',p2s:'',p3:'',p3s:''},settings:{name:'KAMANDAR LEAGUE',season:1,maxSq:20},matchesPlayed:0,currentStage:1};save();closeModal('modal-admin');renderHome();toast('🗑️ ریست کامل شد');}
+
+// ============ INIT ============
+load();renderHome();updateFab();
+</script>
+</body>
+</html>
